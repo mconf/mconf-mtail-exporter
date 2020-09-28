@@ -28,8 +28,10 @@ func FetchIPsFromCluster(podName, namespace string) []string {
 
 	if len(pods.Items) >= 1 {
 		for _, pod := range pods.Items {
-			if pod.Name[:len(podName)] == podName {
-				ips = append(ips, pod.Status.HostIP)
+			if len(pod.Name) >= len(podName) {
+				if pod.Name[:len(podName)] == podName {
+					ips = append(ips, pod.Status.HostIP)
+				}
 			}
 		}
 	}
@@ -64,7 +66,11 @@ func exporterHandler(w http.ResponseWriter, r *http.Request) {
 						array = strings.Split(line, " ")
 
 						if len(array) == 2 {
-							line = array[0] + "{nodeip=\"" + ip + "\"}" + " " + array[1]
+							if strings.Contains(line, "{") {
+								line = array[0][:len(array[0])-1] + ",nodeip=\"" + ip + "\"} " + array[1]
+							} else {
+								line = array[0] + "{nodeip=\"" + ip + "\"} " + array[1]
+							}
 						}
 					}
 
